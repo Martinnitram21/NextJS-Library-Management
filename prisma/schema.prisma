@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String
+  password      String
+  role          UserRole       @default(USER)
+  resetToken    String?
+  resetTokenExpiry DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  borrowings    Borrowing[]
+  notifications Notification[]
+}
+
+model Book {
+  id            String         @id @default(cuid())
+  title         String
+  author        String
+  isbn          String         @unique
+  publishedYear Int
+  genre         String
+  description   String?
+  coverImage    String?
+  totalCopies   Int
+  availableCopies Int
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  borrowings    Borrowing[]
+}
+
+model Borrowing {
+  id            String         @id @default(cuid())
+  userId        String
+  bookId        String
+  borrowDate    DateTime       @default(now())
+  dueDate       DateTime
+  returnDate    DateTime?
+  status        BorrowingStatus @default(BORROWED)
+  user          User           @relation(fields: [userId], references: [id])
+  book          Book           @relation(fields: [bookId], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // DUE_SOON, OVERDUE, SYSTEM, ADMIN
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum BorrowingStatus {
+  BORROWED
+  RETURNED
+  OVERDUE
+} 
